@@ -77,4 +77,3 @@ class BilinearInterpolation:
 
 
 bilinear = BilinearInterpolation('images/image.png', 2)
-print(bilinear.core_transform())
