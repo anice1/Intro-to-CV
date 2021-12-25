@@ -1,22 +1,11 @@
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 
 class BilinearInterpolation:
 
     def __init__(self, image, scale_size) -> None:
-        self.IMAGE = image
         self.SCALE_SIZE = scale_size
-
-        self.IMAGE = self.read_image()
-
-    def read_image(self):
-        """Transforms image data to numpy array
-
-        Returns:
-            ndarray: 2D array of given image
-        """
-        return cv2.imread(self.IMAGE, cv2.IMREAD_GRAYSCALE)
+        self.IMAGE = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
 
     def create_empty_image(self):
         """creates an empty image using scale provided
@@ -74,6 +63,3 @@ class BilinearInterpolation:
                 result = self.apply_bilinear_transform(i,j,self.IMAGE)
                 new_image[i,j] = result
         return new_image
-
-
-bilinear = BilinearInterpolation('images/image.png', 2)
