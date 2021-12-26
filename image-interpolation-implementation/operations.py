@@ -58,11 +58,13 @@ def image_segmentation_app():
             st.subheader('Segmented')
             st.image(image)
     
-    image = cv2.imread('../images/business.jpg')
+    image = cv2.imread('../images/image.png')
     
     #convert image to HSV
-    new_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    mask = cv2.inRange(new_image, lower_bound, upper_bound)
-    result = cv2.bitwise_and(new_image, new_image, mask=mask)
-    st.image(result)
+    mask = cv2.inRange(hsv_image, upper_bound, lower_bound)
+    result = cv2.bitwise_and(hsv_image, hsv_image, mask=mask)
+    cv2.imshow('image',result)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
