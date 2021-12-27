@@ -3,8 +3,10 @@ from PIL import Image
 from config import BilinearInterpolation
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
+import numpy as np
 import cv2
 import io
+
 
 def bilinear_app():
     st.title('Bilinear Interpolation')
@@ -19,14 +21,16 @@ def bilinear_app():
 
     col1, col2 = st.columns(2)
     if image:
-        Image.open(image.read())
+        image_data = np.asarray(Image.open(image))
+        bilinear = BilinearInterpolation(image_data, 1)
+        
         with col1:
             st.subheader('Original Image')
             st.image(image)
         
         with col2:
             st.subheader('Generated Image')
-            st.image(image)
+            st.image(bilinear.core_transform())
 
 
 def image_segmentation_app():
@@ -58,13 +62,18 @@ def image_segmentation_app():
             st.subheader('Segmented')
             st.image(image)
     
-    image = cv2.imread('../images/image.png')
     
-    #convert image to HSV
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    original_image = cv2.imread('../images/image.png')
+    with col1:
+        st.subheader('Original Static Image')
+        st.image(original_image)
 
-    mask = cv2.inRange(hsv_image, upper_bound, lower_bound)
-    result = cv2.bitwise_and(hsv_image, hsv_image, mask=mask)
-    cv2.imshow('image',result)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    with col2:
+        #convert image to HSV
+        hsv_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+        st.subheader('HSV Version')
+        st.image(hsv_image)
+        mask = cv2.inRange(hsv_image, upper_bound/2, lower_bound/2)
+        result = cv2.bitwise_and(hsv_image, hsv_image, mask=mask)
+        st.subheader('Masked Version')
+        st.image(result)

@@ -5,7 +5,10 @@ class BilinearInterpolation:
 
     def __init__(self, image, scale_size) -> None:
         self.SCALE_SIZE = scale_size
-        self.IMAGE = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
+        if not type(image) == type(image):
+            self.IMAGE = cv2.imread(image, cv2.IMREAD_GRAYSCALE)  
+        else:
+            self.IMAGE = image
 
     def create_empty_image(self):
         """creates an empty image using scale provided
