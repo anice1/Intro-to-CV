@@ -7,7 +7,6 @@ import numpy as np
 import cv2
 import io
 
-
 def bilinear_app():
     st.title('Bilinear Interpolation')
     st.info('Implementation of custom Bilinear Interpolation algorithm on an image')
@@ -23,11 +22,11 @@ def bilinear_app():
     if image:
         image = Image.open(image)
         # convert our image to RGB because it's coming as CMYK
-        if image.mode == 'CMYK':
-            image = image.convert('RGB')
+        # if image.mode == 'CMYK':
+        #     image = image.convert('RGB')
 
-        image_data = np.asarray(Image.open(image))
-        st.write(image.shape)
+        # image_data = np.asarray(Image.open(image))
+        image_data = plt.imread('../images/business.jpg')
         bilinear = BilinearInterpolation(image_data, [2,2])
         
         with col1:
@@ -36,7 +35,8 @@ def bilinear_app():
         
         with col2:
             st.subheader('Generated Image')
-            st.image(bilinear.core_transform())
+            gen_image = bilinear.core_transform()
+            st.image(gen_image, clamp=True)
 
 
 def image_segmentation_app():

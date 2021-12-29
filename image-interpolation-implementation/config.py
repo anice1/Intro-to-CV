@@ -20,9 +20,26 @@ class BilinearInterpolation:
             ndarray: 2D array of new image
         """
         new_image = np.zeros((self.SCALE_SIZE[0]*self.IMAGE.shape[0], \
-                                self.SCALE_SIZE[1]*self.IMAGE.shape[1]))
+                                self.SCALE_SIZE[1]*self.IMAGE.shape[1], 3 if len(self.IMAGE.shape) == 3 else None), dtype='uint8')
         return new_image
         
+    def check_and_transform_rgb(self, image):
+        """Transforms and scales rgb color channels
+
+        Args:
+            image ndarray: a numpy array of image
+
+        Returns:
+            ndarray: a numpy array of transformed image channels
+        """
+        if len(image) == 3:
+            r = self.core_transform(image[:,:,0])
+            g = self.core_transform(image[:,:,1])
+            b = self.core_transform(image[:,:,2])
+            channel = r,g,b
+            return np.asarray(channel)
+        return image
+
     def apply_bilinear_transform(self, row, column, image):
         """Applies bilinear interpolation on an image
 
@@ -66,6 +83,7 @@ class BilinearInterpolation:
         new_image = self.create_empty_image()
         scale = self.create_scaler(self.SCALE_SIZE)
         inverse_scale = np.linalg.inv(scale)
+        image = self.check_and_transform_rgb(self.IMAGE)
 
         for i in range(self.IMAGE.shape[0]):
                 for j in range(self.IMAGE.shape[1]):
@@ -78,3 +96,9 @@ class BilinearInterpolation:
                         result = self.apply_bilinear_transform(new_i,new_j,self.IMAGE)
                         new_image[i,j] = result
         return new_image
+    
+
+
+# image = cv2.imread('images/business.jpg')
+# bilinear = BilinearInterpolation('images/business.jpg', [2,2])
+# print(bilinear.core_transform())
