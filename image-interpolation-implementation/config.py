@@ -3,12 +3,15 @@ import cv2
 
 class BilinearInterpolation:
 
-    def __init__(self, image, scale_size) -> None:
-        self.SCALE_SIZE = scale_size
-        if not type(image) == type(image):
+    def __init__(self, image, scale_size:list) -> None:
+        if isinstance(image, str):
             self.IMAGE = cv2.imread(image, cv2.IMREAD_GRAYSCALE)  
-        else:
+        elif isinstance(image, np.ndarray):
             self.IMAGE = image
+        else:
+            raise ValueError('image must be an ndarray or path to image data not {}'.format(type(image)))
+
+        self.SCALE_SIZE = scale_size
 
     def create_empty_image(self):
         """creates an empty image using scale provided
@@ -16,8 +19,8 @@ class BilinearInterpolation:
         Returns:
             ndarray: 2D array of new image
         """
-        new_image = np.zeros((self.SCALE_SIZE*self.IMAGE.shape[0], \
-                                self.SCALE_SIZE*self.IMAGE.shape[1]))
+        new_image = np.zeros((self.SCALE_SIZE[0]*self.IMAGE.shape[0], \
+                                self.SCALE_SIZE[1]*self.IMAGE.shape[1]))
         return new_image
         
     def apply_bilinear_transform(self, row, column, image):
@@ -52,17 +55,26 @@ class BilinearInterpolation:
             return final_intensity
         return 0
 
+    def create_scaler(self, scale:list):
+        size = len(scale)
+        matrix = np.zeros((size, size))
+        for i, j in enumerate(matrix):
+            matrix[i][i] = scale[i]
+        return matrix
+
     def core_transform(self):
         new_image = self.create_empty_image()
-        scale = np.array([[self.SCALE_SIZE,0],[0,self.SCALE_SIZE]])
+        scale = self.create_scaler(self.SCALE_SIZE)
         inverse_scale = np.linalg.inv(scale)
 
         for i in range(self.IMAGE.shape[0]):
-            for j in range(self.IMAGE.shape[1]):
-                point = np.array([i,j])
-                dot_point = inverse_scale.dot(point)
-                new_i, new_j = dot_point
-
-                result = self.apply_bilinear_transform(i,j,self.IMAGE)
-                new_image[i,j] = result
+                for j in range(self.IMAGE.shape[1]):
+                    point = np.array([i,j])
+                    dot_point = inverse_scale.dot(point)
+                    new_i, new_j = dot_point
+                    if i < 0 or i>=self.IMAGE.shape[0] or j<0 or j>=self.IMAGE.shape[1]:
+                        pass
+                    else:
+                        result = self.apply_bilinear_transform(new_i,new_j,self.IMAGE)
+                        new_image[i,j] = result
         return new_image
