@@ -20,13 +20,11 @@ def bilinear_app():
 
     col1, col2 = st.columns(2)
     if image:
-        image = Image.open(image)
         # convert our image to RGB because it's coming as CMYK
-        # if image.mode == 'CMYK':
-        #     image = image.convert('RGB')
+        if image.mode == 'CMYK':
+            image = image.convert('RGB')
 
-        # image_data = np.asarray(Image.open(image))
-        image_data = plt.imread('../images/business.jpg')
+        image_data = np.asarray(Image.open(image))
         bilinear = BilinearInterpolation(image_data, [2,2])
         
         with col1:

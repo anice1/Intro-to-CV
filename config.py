@@ -81,4 +81,39 @@ class BilinearInterpolation:
 
 image = cv2.imread('images/business.jpg', cv2.IMREAD_GRAYSCALE)
 bilinear = BilinearInterpolation('images/business.jpg', [1,1])
-print(bilinear.create_scaler([2,2]))
+angle = 45 
+cos = np.cos(np.deg2rad(angle))
+sin = np.sin(np.deg2rad(angle))
+
+scale = np.array([[cos, -sin],[sin, cos]])
+row, col = image.shape[:2]
+cordinate = np.array([[0,0],[0,col-1],[row-1,0],[row-1,col-1]])
+dot_cord = scale.dot(cordinate.T)
+
+minimums = dot_cord.min(axis=1)
+maximums = dot_cord.max(axis=1)
+
+min_row = np.int64(np.floor(minimums[0]))
+min_col = np.int64(np.floor(minimums[1]))
+
+max_row = np.int64(np.floor(maximums[0]))
+max_col = np.int64(np.floor(maximums[1]))
+
+row = max_row - min_row +1
+col = max_col - min_col +1
+
+# Create empty image 
+empty_image = np.zeros((row, col), dtype=np.uint8)
+scale_inverse = np.linalg.inv(scale) # Index shifting
+
+for i in range(min_row, max_row):
+    for j in range(min_col, max_col):
+        point = np.array([i,j])
+        dot_point = scale_inverse.dot(point)
+        new_i, new_j = dot_point
+        if i<0 or i>=image.shape[0] or j<0 or j>=image.shape[1]:
+            pass
+        else:
+            g = bilinear.apply_bilinear_transform(new_i, new_j, image)
+            empty_image[i-min_row, j-min_col] = g
+
