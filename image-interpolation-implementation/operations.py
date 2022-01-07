@@ -1,3 +1,4 @@
+from matplotlib import cm
 import streamlit as st
 from PIL import Image
 from config import BilinearInterpolation
@@ -21,15 +22,13 @@ def bilinear_app():
     col1, col2 = st.columns(2)
     if image:
         # convert our image to RGB because it's coming as CMYK
-        if image.mode == 'CMYK':
-            image = image.convert('RGB')
+        image = cmyk_2_rgb(image)
 
-        image_data = np.asarray(Image.open(image))
-        bilinear = BilinearInterpolation(image_data, [2,2])
+        bilinear = BilinearInterpolation(image, [2,2])
         
         with col1:
             st.subheader('Original Image')
-            st.image(image)
+            st.image(image, clamp=True)
         
         with col2:
             st.subheader('Generated Image')
@@ -38,6 +37,7 @@ def bilinear_app():
 
 
 def image_segmentation_app():
+    
     st.title('Image Color Segmentation')
     st.write('''
                 This tiny project will help you segment images by their colors, the aim isn't to solve complex problems, it's an enabler
@@ -45,13 +45,12 @@ def image_segmentation_app():
             ''')
     
     image = st.file_uploader('Upload Image', type=['png','jpg','jpeg'], help='Only .png, jpeg or .jpg are acceptable')
-    image = Image.open('../images/business.jpg')
 
     col1, col2 = st.columns(2)
-
     with col1:
         upper_bound = color.hex2color(st.color_picker('Pick an upper bound'))
         upper_bound = color.rgb_to_hsv(upper_bound)
+    
 
     with col2:
         lower_bound = color.hex2color(st.color_picker('Pick a Lower bound'))    
@@ -59,25 +58,31 @@ def image_segmentation_app():
     
     #Image handling
     if image:
+        
+        image = cmyk_2_rgb(image)
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        
         with col1:
             st.subheader('Original Image')
             st.image(image)
+
         with col2:
             st.subheader('Segmented')
-            st.image(image)
+            segmented = cv2.inRange(hsv_image, (upper_bound[0],upper_bound[1],upper_bound[2]), 
+                                                (lower_bound[0],lower_bound[1],lower_bound[2]))
+            st.image(segmented, clamp=True)
     
-    
-    original_image = cv2.imread('../images/image.png')
-    with col1:
-        st.subheader('Original Static Image')
-        st.image(original_image)
 
-    with col2:
-        #convert image to HSV
-        hsv_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
-        st.subheader('HSV Version')
-        st.image(hsv_image)
-        mask = cv2.inRange(hsv_image, upper_bound/2, lower_bound/2)
-        result = cv2.bitwise_and(hsv_image, hsv_image, mask=mask)
-        st.subheader('Masked Version')
-        st.image(result)
+def cmyk_2_rgb(image):
+    if np.asarray(Image.open(image)).shape[2] > 3:
+        image = np.asarray(Image.open(image))
+        c = image[:,:,0]
+        m = image[:,:,1]
+        y = image[:,:,2]
+        k = image[:,:,3]
+
+        red = 255 * (1-c/100) * (1-k/100)
+        green = 255 * (1-m/100) * (1-k/100)
+        blue = 255 * (1-y/100) * (1 - k/100)
+        return np.asarray((red,green,blue))
+    return np.asarray(Image.open(image))
