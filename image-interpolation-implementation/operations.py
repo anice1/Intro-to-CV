@@ -1,22 +1,14 @@
-from matplotlib import cm
-import streamlit as st
-from PIL import Image
 from config import BilinearInterpolation
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
 import numpy as np
+import streamlit as st
+from PIL import Image
+from scipy import signal
 import cv2
-import io
+
 
 def bilinear_app():
-    st.title('Bilinear Interpolation')
-    st.info('Implementation of custom Bilinear Interpolation algorithm on an image')
-
-    st.write('''Bilinear interpolation is performed using linear interpolation first in one direction, 
-                and then again in the other direction. Although each step is linear in the sampled values and in the position, 
-                the interpolation as a whole is not linear but rather quadratic in the sample location. 
-                \n Source: https://en.wikipedia.org/wiki/Bilinear_interpolation''')
-
     image = st.file_uploader('Upload Image', type=['png', 'jpg', 'jpeg'], help='Only .png and .jpg are accepted')
 
     col1, col2 = st.columns(2)
@@ -37,13 +29,6 @@ def bilinear_app():
 
 
 def image_segmentation_app():
-    
-    st.title('Image Color Segmentation')
-    st.write('''
-                This tiny project will help you segment images by their colors, the aim isn't to solve complex problems, it's an enabler
-                for greater projects to come. I'm learning computer vision and it's only meant for practice 😊
-            ''')
-    
     image = st.file_uploader('Upload Image', type=['png','jpg','jpeg'], help='Only .png, jpeg or .jpg are acceptable')
 
     col1, col2 = st.columns(2)
@@ -71,7 +56,36 @@ def image_segmentation_app():
             segmented = cv2.inRange(hsv_image, (upper_bound[0],upper_bound[1],upper_bound[2]), 
                                                 (lower_bound[0],lower_bound[1],lower_bound[2]))
             st.image(segmented, clamp=True)
+
+def blur_and_edge_detector_app():
+    image = st.file_uploader('Upload an Image', accept_multiple_files=False, type=['png','jpg','jpeg'], help="Will help you blur and detect edge of an image",)
+    col1, col2 = st.columns(2)
+    with col1:
+        filter = st.slider('Uniform Filter level',min_value=1, max_value=10, step=1)
+    with col2:
+        if image:
+            st.image(image,use_column_width='auto')
+            image_array = np.array(Image.open(image))
+            
+            # Convert to Gray
+            gray_image = cv2.cvtColor(image_array, cv2.COLOR_RGB2GRAY)
+            smoothing_threshold = np.ones((filter,filter))
+
+            blurred_image = signal.convolve2d(gray_image, smoothing_threshold, boundary='symm', mode='same')
+            blurred_image = cv2.resize(blurred_image, dsize=None, fx=0.5, fy=0.5)
+            cv2.imwrite('blurred_image.jpg',blurred_image)
+            st.image('blurred_image.jpg', clamp=False)
+
+        xMask = np.array([[-1,0,1],[-1,0,1],[-1,0,1]])
+        yMask = xMask.T
+        fx = signal.convolve2d(blurred_image,xMask, boundary='symm',mode='same')
+        fy = signal.convolve2d(blurred_image,yMask, boundary='symm',mode='same')
+
+        magnitude = (fx**2 + fy**2)**0.5
+        threshold = magnitude.max() -50 * magnitude.std()
+        st.image(magnitude>threshold, clamp=True) 
     
+
 
 def cmyk_2_rgb(image):
     if np.asarray(Image.open(image)).shape[2] > 3:
